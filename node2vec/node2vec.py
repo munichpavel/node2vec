@@ -43,9 +43,9 @@ class Graph():
 		G = self.G
 		walks = []
 		nodes = list(G.nodes())
-		print 'Walk iteration:'
+		print('Walk iteration:')
 		for walk_iter in range(num_walks):
-			print str(walk_iter+1), '/', str(num_walks)
+			print(str(walk_iter+1), '/', str(num_walks))
 			random.shuffle(nodes)
 			for node in nodes:
 				walks.append(self.node2vec_walk(walk_length=walk_length, start_node=node))
@@ -63,11 +63,11 @@ class Graph():
 		unnormalized_probs = []
 		for dst_nbr in sorted(G.neighbors(dst)):
 			if dst_nbr == src:
-				unnormalized_probs.append(G[dst][dst_nbr]['weight']/p)
+				unnormalized_probs.append(G[dst][dst_nbr][0]['weight']/p)
 			elif G.has_edge(dst_nbr, src):
-				unnormalized_probs.append(G[dst][dst_nbr]['weight'])
+				unnormalized_probs.append(G[dst][dst_nbr][0]['weight'])
 			else:
-				unnormalized_probs.append(G[dst][dst_nbr]['weight']/q)
+				unnormalized_probs.append(G[dst][dst_nbr][0]['weight']/q)
 		norm_const = sum(unnormalized_probs)
 		normalized_probs =  [float(u_prob)/norm_const for u_prob in unnormalized_probs]
 
