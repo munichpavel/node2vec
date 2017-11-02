@@ -61,13 +61,31 @@ class Graph():
 		q = self.q
 
 		unnormalized_probs = []
-		for dst_nbr in sorted(G.neighbors(dst)):
-			if dst_nbr == src:
-				unnormalized_probs.append(G[dst][dst_nbr][0]['weight']/p)
-			elif G.has_edge(dst_nbr, src):
-				unnormalized_probs.append(G[dst][dst_nbr][0]['weight'])
-			else:
-				unnormalized_probs.append(G[dst][dst_nbr][0]['weight']/q)
+
+        # PL mod: differentiate between graphs types (multi or not)
+        # PL TODO: make random walk also along random connecting edgnes, not just 0th
+        if isinstance(G, nx.multigraph.MultiGraph):
+            for dst_nbr in sorted(G.neighbors(dst)):
+                if dst_nbr == src:
+                    # Multigraph TODO: can be more than one edge, 0 only the 1st one 
+                    unnormalized_probs.append(G[dst][dst_nbr][0]['weight']/p)
+                elif G.has_edge(dst_nbr, src):
+                    # Multigraph TODO: can be more than one edge, 0 only the 1st one
+                    unnormalized_probs.append(G[dst][dst_nbr][0]['weight'])
+                else:
+                    # Multigraph TODO: can be more than one edge, 0 only the 1st one
+                    unnormalized_probs.append(G[dst][dst_nbr][0]['weight']/q)
+        else: # Is not multigraph:
+            for dst_nbr in sorted(G.neighbors(dst)):
+                if dst_nbr == src:
+                    # Multigraph TODO: can be more than one edge, 0 only the 1st one 
+                    unnormalized_probs.append(G[dst][dst_nbr]['weight']/p)
+                elif G.has_edge(dst_nbr, src):
+                    # Multigraph TODO: can be more than one edge, 0 only the 1st one
+                    unnormalized_probs.append(G[dst][dst_nbr]['weight'])
+                else:
+                    # Multigraph TODO: can be more than one edge, 0 only the 1st one
+                    unnormalized_probs.append(G[dst][dst_nbr]['weight']/q)
 		norm_const = sum(unnormalized_probs)
 		normalized_probs =  [float(u_prob)/norm_const for u_prob in unnormalized_probs]
 
@@ -82,7 +100,7 @@ class Graph():
 
 		alias_nodes = {}
 		for node in G.nodes():
-			unnormalized_probs = [G[node][nbr]['weight'] for nbr in sorted(G.neighbors(node))]
+			unnormalized_probs = [G[node][nbr][0]['weight'] for nbr in sorted(G.neighbors(node))]
 			norm_const = sum(unnormalized_probs)
 			normalized_probs =  [float(u_prob)/norm_const for u_prob in unnormalized_probs]
 			alias_nodes[node] = alias_setup(normalized_probs)
@@ -147,3 +165,20 @@ def alias_draw(J, q):
 	    return kk
 	else:
 	    return J[kk]
+
+
+def learn_embeddings(walks, dimensions, window_size, workers, n_iter=1):
+    '''
+    Learn embeddings by optimizing the Skipgram objective using SGD.
+    Transplanted from main.py and make Python 3 compatible
+    '''
+    
+    # Python 2 or 3
+    if sys.version_info.major < 3:
+        walks = [map(str, walk) for walk in walks]
+    else: # Python 3
+        walks = [list(map(str,walk)) for walk in walks]
+        
+    model = Word2Vec(walks, size=dimensions, window=window_size, min_count=0, sg=1, workers=workers, iter=n_iter)
+    #model.save_word2vec_format(args.output)
+    return model
